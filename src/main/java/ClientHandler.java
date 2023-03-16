@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Logger.*;
-import org.w3c.dom.ls.LSOutput;
 
 public class ClientHandler extends Thread {
 
@@ -22,14 +21,8 @@ public class ClientHandler extends Thread {
         this.clientName = br.readLine();
         logger = LoggerImpl.getInstance();
         clients.add(this);
-//        оповещенио о входе новго клиента
-        StringBuilder stringBuilder = new StringBuilder();
-        for (ClientHandler clientHandler : clients) {
-            stringBuilder.append(clientHandler.clientName);
-            stringBuilder.append(";\n");
-        }
-        String clientsOnline = stringBuilder.toString();
-        sendMessage("Сервер: " + clientName + " подключился к беседе." + "В сети: " + clientsOnline);
+        collectiveMessage("Сервер: " + clientName + " подключился к беседе");
+        personalMessage("Вы вошли в чат. Для отображения всех пользователей введите 'all', для выхода введите 'exit'.");
     }
 
     @Override
@@ -40,17 +33,26 @@ public class ClientHandler extends Thread {
 //                парсим входной поток в строку
                 inputMessage = br.readLine();
                 System.out.println(inputMessage);
-//                обработка сообщения exit
                 String[] message = inputMessage.split(": ");
+//                обработка сообщения 'exit'
                 if (message[1].equals("exit")) {
                     removeClientHandler();
+//                обработка сообщения 'all'
+                } else if (message[1].equals("all")) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (ClientHandler clientHandler : clients) {
+                        stringBuilder.append(clientHandler.clientName);
+                        stringBuilder.append(";\n");
+                    }
+                    String clientsOnline = stringBuilder.toString();
+                    personalMessage("В сети: \n" + clientsOnline);
                 } else {
 //                    обработка других входящих сообщений (отправка сообщения другим пользователям через выходной поток обработчика клиента)
-                    sendMessage(inputMessage);
+                    collectiveMessage(inputMessage);
                 }
             } catch (IOException ex) {
-                System.out.println("Потеряно соединение с клиентом" + clientName);
-                logger.log(this, "Потеряно соединение с клиентом" + clientName);
+                System.out.println("Потеряно соединение с клиентом " + clientName);
+                logger.log(this, "Потеряно соединение с клиентом " + clientName);
                 ex.getMessage();
                 break;
             }
@@ -63,8 +65,20 @@ public class ClientHandler extends Thread {
         }
     }
 
-    //    метод отправки сообщений
-    public void sendMessage(String message) throws IOException {
+    //    метод отправки сообщений другим клиентам
+    public void collectiveMessage(String message) throws IOException {
+        for (ClientHandler clientHandler : clients) {
+            if (!clientHandler.clientName.equals(this.clientName)) {
+                clientHandler.bw.write(message);
+                logger.log(this, message);
+                clientHandler.bw.newLine();
+                clientHandler.bw.flush();
+            }
+        }
+    }
+
+    //    сообщение для запрашивающего клиента
+    public void personalMessage(String message) throws IOException {
         for (ClientHandler clientHandler : clients) {
             if (clientHandler.clientName.equals(this.clientName)) {
                 clientHandler.bw.write(message);
@@ -78,9 +92,10 @@ public class ClientHandler extends Thread {
     //  метод остановки потока и удаление клиента
     public void removeClientHandler() throws IOException {
         System.out.println("Сервер: " + clientName + " вышел из чата");
-        logger.log(this,"Клиент " + this.clientName + " socket: " + this.socket + " вышел из чата");
-        sendMessage("Сервер: " + clientName + " вышел из чата");
+        logger.log(this, "Клиент " + this.clientName + " socket: " + this.socket + " вышел из чата");
+        collectiveMessage("Сервер: " + clientName + " вышел из чата");
         clients.remove(this);
+        br.close();
     }
 
     @Override

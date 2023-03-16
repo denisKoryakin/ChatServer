@@ -6,15 +6,13 @@ import Logger.*;
 public class Server {
     public static Logger logger = LoggerImpl.getInstance();
 
-
     public Server() {
     }
 
     public void startServer() {
         String portNumber = null;
 //        считываем номер порта из файла
-        try (
-                BufferedReader bufferedReader = new BufferedReader(new FileReader("settings.txt"))
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader("settings.txt"))
         ) {
             portNumber = bufferedReader.readLine();
         } catch (
@@ -38,8 +36,7 @@ public class Server {
             ex.printStackTrace();
         }
 //        создаем новое сетевое соединение
-        try (
-                ServerSocket serverSocket = new ServerSocket(port)) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (true) {
                 Socket clientSocket = serverSocket.accept(); // ждем подключения
 //            создаем обработчик клиента, который подключился к серверу
@@ -65,7 +62,7 @@ public class Server {
 
     @Override
     public String toString() {
-        return "Сервер: ";
+        return "Server: ";
     }
 }
 

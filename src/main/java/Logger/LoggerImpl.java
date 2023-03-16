@@ -34,6 +34,8 @@ public class LoggerImpl implements Logger{
             byte[] bytes = stringBuilder.getBytes(StandardCharsets.UTF_8);
 //        запись байт в файл
             fos.write(bytes, 0, bytes.length);
+            fos.flush();
+            fos.close();
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
