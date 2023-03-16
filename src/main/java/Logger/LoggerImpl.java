@@ -20,8 +20,6 @@ public class LoggerImpl implements Logger{
 
     Date date = new Date();
 
-    // TODO: 09.03.2023 Почему то запись в файл происходит после завершения работы программы
-
     @Override
     public void log(Object object, String text) {
         try (FileOutputStream fos = new FileOutputStream("logs.txt", true)) {
